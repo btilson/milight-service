@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-## Version 0.4 (9/9/15)
+## Web Service CGI Application - Version 0.4 (9/9/15)
 ##
 ## Edit API Key and system command string below
 
