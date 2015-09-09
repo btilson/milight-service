@@ -12,7 +12,7 @@ use IO::Socket;
 
 my ($optLight, $optState, $optDelay, $optBrightness, $optTransInterval, $optColour, $optHue, $optNotification, $optEnforceTime);
 
-Getopt::Mixed::init( 'l=s s=s d=i b=i t=s c=i h=i n=i e=s light>l state>s delay>d brightness>b transInterval>t colour>c hue>h notification>n enforcetime>e');
+Getopt::Mixed::init( 'l=s s=s d=i b=i t=s c=i h=i n=i e=s light>l state>s delay>d brightness>b interval>t colour>c hue>h notification>n enforcetime>e');
 
 while( my( $option, $value, $pretty ) = Getopt::Mixed::nextOption() ) {
 	OPTION: {
