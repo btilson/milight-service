@@ -143,9 +143,9 @@ sub changeLightBrightness {
 	
 	my ($brightenHex, $dimHex);
 	my $interval;
-	
+
 	my $onHex = getHexOnOffValue($zone,$type,1);
-	
+
 	if ( $optTransInterval ) {
 		$interval = $optTransInterval;
 	}
@@ -160,6 +160,7 @@ sub changeLightBrightness {
 	) or die "It didn't work. $! \n";
 	
 	if ( $type eq 'DW' ) {
+		$optBrightness = "10" if $optBrightness > 10;
 		if ( $optBrightness > $brightness ) {
 			## Increase brightness
 			$brightenHex = "\x3C\x00\x55";
@@ -185,22 +186,23 @@ sub changeLightBrightness {
 		return $optBrightness;
 	}
 	elsif ( $type eq 'RGBW' ) {
+		$optBrightness = "25" if $optBrightness > 25;
 		if ( $optBrightness > $brightness ) {
 			$brightness = $brightness + 1;
-			my %brightnesHexValues = getBrightnessHexValuesDB();
+			my %brightnessHexValues = getBrightnessHexValuesDB();
 			$socks->send($onHex) or die "Nope, can't send that. $! \n";
 			select(undef, undef, undef, 0.10); ## Delay 100ms
 			if ( defined $optTransInterval ) {
 				## Transition interval specified, step through brightness intervals
-				for (my $i=$brightness; $i = $optBrightness; $i++) {
-					my $hexValue = $brightnesHexValues{$i};
+				for (my $i=$brightness; $i <= $optBrightness; $i++) {
+					my $hexValue = pack "H*",$brightnessHexValues{$i};
 					$socks->send($hexValue) or die "Nope, can't send that. $! \n";
 					select(undef, undef, undef, $interval); ## Delay predefined interval
 				}
 			}
 			else {
 				## No transition, go straight to new brightness
-				my $hexValue = $brightnesHexValues{$optBrightness};
+				my $hexValue = $brightnessHexValues{$optBrightness};
 				$socks->send($hexValue) or die "Nope, can't send that. $! \n";
 				select(undef, undef, undef, $interval); ## Delay predefined interval
 				$socks->send($hexValue) or die "Nope, can't send that. $! \n";
@@ -208,20 +210,20 @@ sub changeLightBrightness {
 		}
 		elsif ( $optBrightness < $brightness ) {
 			$brightness = $brightness - 1;
-			my %brightnesHexValues = getBrightnessHexValuesDB();
+			my %brightnessHexValues = getBrightnessHexValuesDB();
 			$socks->send($onHex) or die "Nope, can't send that. $! \n";
 			select(undef, undef, undef, 0.10); ## Delay 100ms
 			if ( defined $optTransInterval ) {
 				## Transition interval specified, step through brightness intervals
-				for (my $i=$brightness; $i = $optBrightness; $i--) {
-					my $hexValue = $brightnesHexValues{$i};
+				for (my $i=$brightness; $i >= $optBrightness; $i--) {
+					my $hexValue = pack "H*",$brightnessHexValues{$i};
 					$socks->send($hexValue) or die "Nope, can't send that. $! \n";
 					select(undef, undef, undef, $interval); ## Delay predefined interval
 				}
 			}
 			else {
 				## No transition, go straight to new brightness
-				my $hexValue = $brightnesHexValues{$optBrightness};
+				my $hexValue = $brightnessHexValues{$optBrightness};
 				$socks->send($hexValue) or die "Nope, can't send that. $! \n";
 				select(undef, undef, undef, $interval); ## Delay predefined interval
 				$socks->send($hexValue) or die "Nope, can't send that. $! \n";
@@ -276,7 +278,7 @@ sub getHexOnOffValue {
 	my $type = shift;
 	my $state = shift;
 	
-	my $hexValue;
+	my $hexValue = "error";
 	
 	if ( $type eq 'DW' && $state == 0 ) {
 		## Dual White OFF HEX Values
@@ -306,6 +308,7 @@ sub getHexOnOffValue {
 		$hexValue = "\x49\x00\x55" if $zone == 3;
 		$hexValue = "\x4B\x00\x55" if $zone == 4;
 	}
+
 	return $hexValue;
 }
 
@@ -352,22 +355,22 @@ sub getLightDB {
 sub getBrightnessHexValuesDB {
 	
 	my ($key, $value);
-	my %brightnesHexValues;
+	my %brightnessHexValues;
 	
 	my $ds = get_datasource();
 	my $dbh = DBI->connect($ds) || die "DBI::errstr";
 	
-	my $query = $dbh->prepare("select key, value from RGBW_BRIGHTNESS_HEX_VALUES order by key") || die "DBI::errstr";
+	my $query = $dbh->prepare("select key, HEX_value from RGBW_BRIGHTNESS_HEX_VALUES order by key") || die "DBI::errstr";
 	$query->execute();
 	$query->bind_columns(\$key,\$value);
 
 	while ($query->fetch) {
-                $brightnesHexValues{"$key"}=$value;
+                $brightnessHexValues{"$key"}=$value;
     }
     
 	$query->finish();
 	
-	return %brightnesHexValues;
+	return %brightnessHexValues;
 }
 
 sub changeLightStateDB {

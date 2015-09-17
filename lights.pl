@@ -12,6 +12,8 @@ my $api = $query->param('api');
 ## ENTER A API KEY BELOW
 my $apiKey = '<GENERATE KEY>';
 
+$ENV{"PATH"} = "/usr/bin";
+
 print $query->header("text/plain");
 
 if ( $api eq $apiKey && defined $query->param('name') ) {
